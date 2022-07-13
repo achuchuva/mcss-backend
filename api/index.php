@@ -38,24 +38,16 @@ switch ($resource) {
     if (empty($_GET["world_id"])) {
       http_response_code(400);
       echo json_encode(["message" => "World ID query string missing"]);
-      exit;   
+      exit;
     }
 
     $world_id = $_GET["world_id"];
 
-    if ( ! $destination_gateway->getAllForUser($world_id)) {
-      http_response_code(401);
-      echo json_encode(["message" => "Invalid world ID query string"]);
-      exit;
-    }
-
     $world_gateway = new WorldGateway($database);
-
-    $world_controller = new WorldController($world_gateway, $user_id);
 
     if ( ! $world_gateway->getForUser($world_id, $user_id)) {
       http_response_code(401);
-      echo json_encode(["message" => "Invalid world ID query string"]);
+      echo json_encode(["message" => "You don't have access to this world"]);
       exit; 
     }
 
@@ -76,9 +68,11 @@ switch ($resource) {
 
     $destination_id = intval($_GET["destination_id"]);
 
-    if ( ! $object_gateway->getAllForUser($destination_id)) {
+    $destination_gateway = new DestinationGateway($database);
+
+    if ( ! $destination_gateway->getDestinationByID($destination_id)) {
       http_response_code(401);
-      echo json_encode(["message" => "Invalid destination ID query string"]);
+      echo json_encode(["message" => "This destination doesn't exist"]);
       exit;
     }
 
@@ -88,5 +82,5 @@ switch ($resource) {
     break;
   default:
     http_response_code(404);
-    echo json_encode(["message" => "The requested page wasn't found"]);
+    echo json_encode(["message" => "The requested resource wasn't found"]);
 }

@@ -2,7 +2,7 @@
 
 class DestinationController
 {
-  public function __construct(private DestinationGateway $gateway, private int $world_id)
+  public function __construct(private DestinationGateway $gateway, private int $destination_id)
   {
   }
 
@@ -10,7 +10,7 @@ class DestinationController
   {
     if ($id == null) {
       if ($method == "GET") {
-        echo json_encode($this->gateway->getAllForUser($this->world_id));
+        echo json_encode($this->gateway->getAllForUser($this->destination_id));
       } else if ($method == "POST") {
         $data = (array) json_decode(file_get_contents("php://input"), true);
 
@@ -21,7 +21,7 @@ class DestinationController
           return;
         }
 
-        $id = $this->gateway->createForUser($data, $this->world_id);
+        $id = $this->gateway->createForUser($data, $this->destination_id);
 
         $this->respondCreated($id);
       } else {
@@ -29,7 +29,7 @@ class DestinationController
       }
     } else {
 
-      $destination = $this->gateway->getForUser($id, $this->world_id);
+      $destination = $this->gateway->getForUser($id, $this->destination_id);
 
       if ($destination === false) {
         $this->respondNotFound($id);
@@ -38,7 +38,7 @@ class DestinationController
 
       switch ($method) {
         case "GET":
-          echo json_encode($this->gateway->getForUser($id, $this->world_id));
+          echo json_encode($this->gateway->getForUser($id, $this->destination_id));
           break;
         case "PATCH":
           $data = (array) json_decode(file_get_contents("php://input"), true);
@@ -50,12 +50,12 @@ class DestinationController
             return;
           }
 
-          $rows = $this->gateway->updateForUser($id, $data, $this->world_id);
+          $rows = $this->gateway->updateForUser($id, $data, $this->destination_id);
           
           echo json_encode(["message" => "Destination updated successfully", "rows" => $rows]);
           break;
           case "DELETE":
-            $rows = $this->gateway->deleteForUser($id, $this->world_id);
+            $rows = $this->gateway->deleteForUser($id, $this->destination_id);
             echo json_encode(["message" => "Destination deleted successfully", "rows" => $rows]);
           break;
         default:

@@ -41,6 +41,21 @@ class DestinationGateway
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
+  public function getDestinationByID(int $id): array | false
+  {
+    $sql = "SELECT * 
+            FROM destinations
+            WHERE id = :id";
+
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
+
   public function createForUser(array $data, string $world_id): string
   {
     $sql = "INSERT INTO worlds (world_id, realm, name, coordinate_x, coordinate_y, coordinate_z, notes)
