@@ -8,10 +8,85 @@ $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
 $parts = explode("/", $path);
 
+$resource = $parts[3];
+
+$id = $parts[4] ?? null;
+
 $database = new Database($_ENV["DB_HOST"], $_ENV["DB_NAME"], $_ENV["DB_USER"], $_ENV["DB_PASS"]);
 
-$world_gateway = new WorldGateway($database);
+$user_gateway = new UserGateway($database);
 
-$world_controller = new WorldController($world_gateway, 1);
+$auth = new Auth($user_gateway);
 
-$world_controller->processRequest($_SERVER["REQUEST_METHOD"], null);
+if (!$auth->authenticateAPIKey()) {
+  exit;
+}
+
+$user_id = $auth->getUserID();
+
+switch ($resource) {
+  case "worlds":
+    $world_gateway = new WorldGateway($database);
+
+    $world_controller = new WorldController($world_gateway, $user_id);
+
+    $world_controller->processRequest($_SERVER["REQUEST_METHOD"], $id);
+    break;
+  case "destinations":
+    $destination_gateway = new DestinationGateway($database);
+
+    if (empty($_GET["world_id"])) {
+      http_response_code(400);
+      echo json_encode(["message" => "World ID query string missing"]);
+      exit;   
+    }
+
+    $world_id = $_GET["world_id"];
+
+    if ( ! $destination_gateway->getAllForUser($world_id)) {
+      http_response_code(401);
+      echo json_encode(["message" => "Invalid world ID query string"]);
+      exit;
+    }
+
+    $world_gateway = new WorldGateway($database);
+
+    $world_controller = new WorldController($world_gateway, $user_id);
+
+    if ( ! $world_gateway->getForUser($world_id, $user_id)) {
+      http_response_code(401);
+      echo json_encode(["message" => "Invalid world ID query string"]);
+      exit; 
+    }
+
+    $world_id = intval($world_id);
+
+    $destination_controller = new DestinationController($destination_gateway, $world_id);
+
+    $destination_controller->processRequest($_SERVER["REQUEST_METHOD"], $id);
+    break;
+  case "objects":
+    $object_gateway = new ObjectGateway($database);
+
+    if (empty($_GET["destination_id"])) {
+      http_response_code(400);
+      echo json_encode(["message" => "Destination ID query string missing"]);
+      exit;   
+    }
+
+    $destination_id = intval($_GET["destination_id"]);
+
+    if ( ! $object_gateway->getAllForUser($destination_id)) {
+      http_response_code(401);
+      echo json_encode(["message" => "Invalid destination ID query string"]);
+      exit;
+    }
+
+    $object_controller = new ObjectController($object_gateway, $destination_id);
+
+    $object_controller->processRequest($_SERVER["REQUEST_METHOD"], $id);
+    break;
+  default:
+    http_response_code(404);
+    echo json_encode(["message" => "The requested page wasn't found"]);
+}

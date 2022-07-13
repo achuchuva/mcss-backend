@@ -1,8 +1,8 @@
 <?php
 
-class WorldController
+class ObjectController
 {
-  public function __construct(private WorldGateway $gateway, private int $user_id)
+  public function __construct(private ObjectGateway $gateway, private int $destination_id)
   {
   }
 
@@ -10,7 +10,7 @@ class WorldController
   {
     if ($id == null) {
       if ($method == "GET") {
-        echo json_encode($this->gateway->getAllForUser($this->user_id));
+        echo json_encode($this->gateway->getAllForUser($this->destination_id));
       } else if ($method == "POST") {
         $data = (array) json_decode(file_get_contents("php://input"), true);
 
@@ -21,7 +21,7 @@ class WorldController
           return;
         }
 
-        $id = $this->gateway->createForUser($data, $this->user_id);
+        $id = $this->gateway->createForUser($data, $this->destination_id);
 
         $this->respondCreated($id);
       } else {
@@ -29,7 +29,7 @@ class WorldController
       }
     } else {
 
-      $world = $this->gateway->getForUser($id, $this->user_id);
+      $world = $this->gateway->getForUser($id, $this->destination_id);
 
       if ($world === false) {
         $this->respondNotFound($id);
@@ -38,7 +38,7 @@ class WorldController
 
       switch ($method) {
         case "GET":
-          echo json_encode($this->gateway->getForUser($id, $this->user_id));
+          echo json_encode($this->gateway->getForUser($id, $this->destination_id));
           break;
         case "PATCH":
           $data = (array) json_decode(file_get_contents("php://input"), true);
@@ -50,13 +50,13 @@ class WorldController
             return;
           }
 
-          $rows = $this->gateway->updateForUser($id, $data, $this->user_id);
+          $rows = $this->gateway->updateForUser($id, $data, $this->destination_id);
 
-          echo json_encode(["message" => "World updated successfully", "rows" => $rows]);
+          echo json_encode(["message" => "Object updated successfully", "rows" => $rows]);
           break;
           case "DELETE":
-            $rows = $this->gateway->deleteForUser($id, $this->user_id);
-            echo json_encode(["message" => "World deleted successfully", "rows" => $rows]);
+            $rows = $this->gateway->deleteForUser($id, $this->destination_id);
+            echo json_encode(["message" => "Objects deleted successfully", "rows" => $rows]);
           break;
         default:
           $this->respondMethodNotAllowed("GET, PATCH, DELETE");
@@ -81,13 +81,13 @@ class WorldController
   private function respondNotFound(string $id): void
   {
     http_response_code(404);
-    echo json_encode(["message" => "World with ID $id not found"]);
+    echo json_encode(["message" => "Object with ID $id not found"]);
   }
 
   private function respondCreated(string $id): void
   {
     http_response_code(201);
-    echo json_encode(["message" => "World created!", "id" => $id]);
+    echo json_encode(["message" => "Object created!", "id" => $id]);
   }
 
   private function getValidationErrors(array $data, bool $is_new = true): array
@@ -95,15 +95,11 @@ class WorldController
     $errors = [];
 
     if ($is_new && empty($data["name"])) {
-      $errors[] = "World name is required";
-    }
-
-    if ($is_new && empty($data["image_url"])) {
-      $errors[] = "Image url is required";
+      $errors[] = "Object name is required";
     }
 
     if (!$is_new && empty($data)) {
-      $errors[] = "To update the world, the data arrays needs to be not empty";
+      $errors[] = "To update the objects, the data arrays needs to be not empty";
     }
 
     return $errors;
