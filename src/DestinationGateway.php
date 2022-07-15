@@ -21,7 +21,7 @@ class DestinationGateway
 
     $stmt->execute();
     
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
   public function getForUser(string $id, int $world_id): array | false
