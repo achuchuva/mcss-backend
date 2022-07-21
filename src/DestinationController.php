@@ -103,9 +103,9 @@ class DestinationController
     }
 
     if ($is_new && (
-      (empty($data["coordinates_x"]) && $data["coordinates_x"] !== 0) ||
-      (empty($data["coordinates_y"]) && $data["coordinates_y"] !== 0) || 
-      (empty($data["coordinates_z"]) && $data["coordinates_z"] !== 0))) {      
+      (empty($data["coordinate_x"]) && strlen($data["coordinate_x"]) == 0) ||
+      (empty($data["coordinate_y"]) && strlen($data["coordinate_y"]) == 0) || 
+      (empty($data["coordinate_z"]) && strlen($data["coordinate_z"]) == 0))) {      
       $errors[] = "Destination coordinates are required";
     }
 

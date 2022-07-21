@@ -55,10 +55,30 @@ class WorldGateway
     return $data;
   }
 
+  public function checkForShareID($share_id): array | false
+  {
+    $sql = "SELECT * 
+            FROM worlds
+            WHERE share_id = :share_id";
+
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->bindValue(":share_id", $share_id, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
+
+  public function joinSharedWorld(string $share_id, int $user_id): bool
+  {
+    return false;
+  }
+
   public function createForUser(array $data, string $user_id): string
   {
-    $sql = "INSERT INTO worlds (user_id, name, image_url, shared)
-            VALUES (:user_id, :name, :image_url, :shared)";
+    $sql = "INSERT INTO worlds (user_id, name, image_url, shared, share_id)
+            VALUES (:user_id, :name, :image_url, :shared, :share_id)";
 
     $stmt = $this->conn->prepare($sql);
 
@@ -70,6 +90,12 @@ class WorldGateway
     } else {
       $stmt->bindValue(":shared", $data["shared"], PDO::PARAM_BOOL);
     }
+
+    do {
+      $share_id = rand(10000, 99999);
+    } while ($this->checkForShareID($share_id));
+
+    $stmt->bindValue(":share_id", $share_id, PDO::PARAM_INT);
 
     $stmt->execute();
 

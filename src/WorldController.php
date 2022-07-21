@@ -16,6 +16,18 @@ class WorldController
 
         $errors = $this->getValidationErrors($data);
 
+        if (!empty($data["share_id"])) {
+          $sharingErrors = $this->getSharingErrors($data["share_id"]);
+
+          if (!empty($sharingErrors)) {
+            $this->respondUnprocessableEntity($errors);
+            return;            
+          }
+
+          $this->gateway->joinSharedWorld($data["share_id"], $this->user_id);
+          return;
+        }
+
         if (!empty($errors)) {
           $this->respondUnprocessableEntity($errors);
           return;
@@ -54,9 +66,9 @@ class WorldController
 
           echo json_encode(["message" => "World updated successfully", "rows" => $rows]);
           break;
-          case "DELETE":
-            $rows = $this->gateway->deleteForUser($id, $this->user_id);
-            echo json_encode(["message" => "World deleted successfully", "rows" => $rows]);
+        case "DELETE":
+          $rows = $this->gateway->deleteForUser($id, $this->user_id);
+          echo json_encode(["message" => "World deleted successfully", "rows" => $rows]);
           break;
         default:
           $this->respondMethodNotAllowed("GET, PATCH, DELETE");
@@ -104,6 +116,28 @@ class WorldController
 
     if (!$is_new && empty($data)) {
       $errors[] = "To update the world, the data arrays needs to be not empty";
+    }
+
+    return $errors;
+  }
+
+  private function getSharingErrors($share_id): array
+  {
+    $errors = [];
+    $sharedWorld = $this->gateway->checkForShareID($share_id);
+
+    if ( ! $sharedWorld) {
+      $errors[] = "Requested world doesn't exist";
+      return $errors;
+    }
+
+    if ($sharedWorld["user_id"] === $this->user_id) {
+      $errors[] = "This world is already your own";
+      return $errors;
+    }
+
+    if ($sharedWorld["shared"] !== true) {
+      $errors[] = "The requested world doesn't have sharing enabled";
     }
 
     return $errors;

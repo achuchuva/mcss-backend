@@ -3,7 +3,7 @@
 class DestinationGateway
 {
   private PDO $conn;
-  public function __construct(Database $database)
+  public function __construct(private Database $database)
   {
     $this->conn = $database->getConnection();
   }
@@ -20,7 +20,7 @@ class DestinationGateway
     $stmt->bindValue(":world_id", $world_id, PDO::PARAM_INT);
 
     $stmt->execute();
-    
+
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
@@ -58,14 +58,16 @@ class DestinationGateway
 
   public function createForUser(array $data, string $world_id): string
   {
-    $sql = "INSERT INTO worlds (world_id, realm, name, coordinate_x, coordinate_y, coordinate_z, notes)
-            VALUES (:world_id, :realm, :name, :coordinate_x, :coordinate_y, :coodinate_z, :notes)";
+
+    $sql = "INSERT INTO destinations (world_id, realm, name, structure, coordinate_x, coordinate_y, coordinate_z, notes)
+            VALUES (:world_id, :realm, :name, :structure, :coordinate_x, :coordinate_y, :coordinate_z, :notes)";
 
     $stmt = $this->conn->prepare($sql);
 
     $stmt->bindValue(":world_id", $world_id, PDO::PARAM_INT);
     $stmt->bindValue(":realm", $data["realm"], PDO::PARAM_STR);
     $stmt->bindValue(":name", $data["name"], PDO::PARAM_STR);
+    $stmt->bindValue(":structure", $data["structure"], PDO::PARAM_STR);
     $stmt->bindValue(":coordinate_x", $data["coordinate_x"], PDO::PARAM_STR);
     $stmt->bindValue(":coordinate_y", $data["coordinate_y"], PDO::PARAM_STR);
     $stmt->bindValue(":coordinate_z", $data["coordinate_z"], PDO::PARAM_STR);
@@ -73,7 +75,19 @@ class DestinationGateway
 
     $stmt->execute();
 
-    return $this->conn->lastInsertId();
+    $id = $this->conn->lastInsertId();
+
+    if (!is_null($data["objects"])) {
+      $object_gateway = new ObjectGateway($this->database);
+
+      $object_gateway->deleteAllForUser($id);
+
+      foreach ($data["objects"] as $object) {
+        $object_gateway->createForUser($object, $id);
+      }
+    }
+
+    return $id;
   }
 
   public function updateForUser(string $id, array $data, string $world_id): int
@@ -90,6 +104,13 @@ class DestinationGateway
     if (!empty($data["name"])) {
       $fields["name"] = [
         $data["name"],
+        PDO::PARAM_STR
+      ];
+    }
+
+    if (!empty($data["structure"])) {
+      $fields["structure"] = [
+        $data["structure"],
         PDO::PARAM_STR
       ];
     }
@@ -122,8 +143,22 @@ class DestinationGateway
       ];
     }
 
+    if (!is_null($data["objects"])) {
+      $object_gateway = new ObjectGateway($this->database);
+
+      $object_gateway->deleteAllForUser($id);
+
+      foreach ($data["objects"] as $object) {
+        $object_gateway->createForUser($object, $id);
+      }
+    }
+
     if (empty($fields)) {
-      return 0;
+      if (!is_null($data["objects"])) {
+        return 1;
+      } else {
+        return 0;
+      }
     } else {
       $sets = array_map(function ($value) {
         return "$value = :$value";

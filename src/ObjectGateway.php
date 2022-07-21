@@ -41,7 +41,7 @@ class ObjectGateway
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
-  public function createForUser(array $data, string $destination_id): string
+  public function createForUser(string $name, string $destination_id): string
   {
     $sql = "INSERT INTO objects (destination_id, name)
             VALUES (:destination_id, :name)";
@@ -49,7 +49,7 @@ class ObjectGateway
     $stmt = $this->conn->prepare($sql);
 
     $stmt->bindValue(":destination_id", $destination_id, PDO::PARAM_INT);
-    $stmt->bindValue(":name", $data["name"], PDO::PARAM_STR);
+    $stmt->bindValue(":name", $name, PDO::PARAM_STR);
 
     $stmt->execute();
 
@@ -103,6 +103,20 @@ class ObjectGateway
     $stmt = $this->conn->prepare($sql);
 
     $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+    $stmt->bindValue(":destination_id", $destination_id, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    return $stmt->rowCount();
+  }
+
+  public function deleteAllForUser(int $destination_id): int
+  {
+    $sql = "DELETE FROM objects
+            WHERE destination_id = :destination_id";
+
+    $stmt = $this->conn->prepare($sql);
+
     $stmt->bindValue(":destination_id", $destination_id, PDO::PARAM_INT);
 
     $stmt->execute();
