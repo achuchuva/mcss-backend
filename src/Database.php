@@ -11,6 +11,7 @@ class Database
   ) {
   }
 
+  // Create a connection with the MySQL database using PHP based on the parameters
   public function getConnection(): PDO
   {
     if ($this->conn === null) {

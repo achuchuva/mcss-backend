@@ -8,6 +8,14 @@ class ObjectGateway
     $this->conn = $database->getConnection();
   }
 
+  // All functions follow a similar structure
+  // A sql statement is constructed as a string
+  // The statment is prepared via the database connection
+  // Any values that are passed as parameters are binded to the statement
+  // The statement is executed and returns either an associative array or false
+  // For non-fetching statments, either ID or amount of rows affected is returned
+
+  // Get all the objects for a given user based on destination_id
   public function getAllForUser(int $destination_id): array | false
   {
     $sql = "SELECT *
@@ -24,6 +32,7 @@ class ObjectGateway
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
+  // Get a single object for a user based on id and destination_id
   public function getForUser(string $id, int $destination_id): array | false
   {
     $sql = "SELECT * 
@@ -41,6 +50,7 @@ class ObjectGateway
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
+  // Create a single object for a given user with a specified name
   public function createForUser(string $name, string $destination_id): string
   {
     $sql = "INSERT INTO objects (destination_id, name)
@@ -56,10 +66,12 @@ class ObjectGateway
     return $this->conn->lastInsertId();
   }
 
+  // Update a single object for a given user
   public function updateForUser(string $id, array $data, string $destination_id): int
   {
     $fields = [];
 
+    // Check which fields are present and need to be updated
     if (!empty($data["name"])) {
       $fields["name"] = [
         $data["name"],
@@ -67,6 +79,7 @@ class ObjectGateway
       ];
     }
 
+    // Check if fields are empty, if they are return that zero rows were affected
     if (empty($fields)) {
       return 0;
     } else {
@@ -90,10 +103,12 @@ class ObjectGateway
 
       $stmt->execute();
 
+      // Return the amount of rows that were affected
       return $stmt->rowCount();
     }
   }
 
+  // Delete a single object for a given user
   public function deleteForUser(string $id, int $destination_id): int
   {
     $sql = "DELETE FROM objects
@@ -110,6 +125,7 @@ class ObjectGateway
     return $stmt->rowCount();
   }
 
+  // Delete all objects for a given user
   public function deleteAllForUser(int $destination_id): int
   {
     $sql = "DELETE FROM objects

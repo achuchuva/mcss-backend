@@ -8,6 +8,15 @@ class DestinationGateway
     $this->conn = $database->getConnection();
   }
 
+  // All functions follow a similar structure
+  // A sql statement is constructed as a string
+  // The statment is prepared via the database connection
+  // Any values that are passed as parameters are binded to the statement
+  // The statement is executed and returns either an associative array or false
+  // For non-fetching statments, either ID or amount of rows affected is returned
+
+  // Get all the destinations for a given user
+  // Requires the world id param
   public function getAllForUser(string $world_id): array | false
   {
     $sql = "SELECT *
@@ -24,6 +33,7 @@ class DestinationGateway
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
+  // Get a single destination for a user based on world id and id
   public function getForUser(string $id, int $world_id): array | false
   {
     $sql = "SELECT * 
@@ -41,6 +51,7 @@ class DestinationGateway
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
+  // Get destination for a user based only by the id
   public function getDestinationByID(int $id): array | false
   {
     $sql = "SELECT * 
@@ -56,6 +67,7 @@ class DestinationGateway
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
+  // Create a destination for a user, data is passed as params as well as world id
   public function createForUser(array $data, string $world_id): string
   {
 
@@ -90,10 +102,12 @@ class DestinationGateway
     return $id;
   }
 
+  // Update a destination for a user based on data and world id
   public function updateForUser(string $id, array $data, string $world_id): int
   {
     $fields = [];
 
+    // Check which fields are present and need to be updated
     if (!empty($data["realm"])) {
       $fields["realm"] = [
         $data["realm"],
@@ -143,6 +157,8 @@ class DestinationGateway
       ];
     }
 
+    // For objects, all are first removed and then created again
+    // There is no way to save previous objects when updating, they're overwritten
     if (!is_null($data["objects"])) {
       $object_gateway = new ObjectGateway($this->database);
 
@@ -153,6 +169,7 @@ class DestinationGateway
       }
     }
 
+    // Check if fields are empty, if they are return that zero rows were affected
     if (empty($fields)) {
       if (!is_null($data["objects"])) {
         return 1;
@@ -180,10 +197,12 @@ class DestinationGateway
 
       $stmt->execute();
 
+      // Return the amount of rows that were affected
       return $stmt->rowCount();
     }
   }
 
+  // Delete a destination based on the id and world id
   public function deleteForUser(string $id, int $world_id): int
   {
     $sql = "DELETE FROM destinations
