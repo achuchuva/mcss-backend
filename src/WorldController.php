@@ -90,7 +90,8 @@ class WorldController
           } else {
             // The share id wasn't present, return a 422 status code
             http_response_code(422);
-            echo json_encode(["errors" => "Share ID is required"]);
+            $errors[] = "Share ID is required";
+            echo json_encode(["errors" => $errors]);
           }
           break;
         case "DELETE":
@@ -143,10 +144,6 @@ class WorldController
     // If any of the required fields are empty, add to the errors array
     if ($is_new && empty($data["name"])) {
       $errors[] = "World name is required";
-    }
-
-    if ($is_new && empty($data["image_url"])) {
-      $errors[] = "Image url is required";
     }
 
     // If the world update data is empty, add to the errors array

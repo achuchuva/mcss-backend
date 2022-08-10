@@ -165,9 +165,9 @@ class WorldGateway
       ];
     }
 
-    if (!empty($data["image_url"])) {
+    if (!empty($data["image_base64"])) {
       $fields["image_url"] = [
-        $data["image_url"],
+        $this->decodeImage($id, $data),
         PDO::PARAM_STR
       ];
     }
@@ -206,6 +206,15 @@ class WorldGateway
       // Return the amount of rows that were affected
       return $stmt->rowCount();
     }
+  }
+
+  // Decode the image and save to the database
+  private function decodeImage(string $id, array $data): string
+  {
+    $image = base64_decode($data["image_base64"]);
+    $image_url = $id . ".png";
+    file_put_contents("../world_images/" . $image_url, $image);
+    return $image_url;
   }
 
   // Delete a world based on id and user_id
